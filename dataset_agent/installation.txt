@@ -1,0 +1,142 @@
+Windows Setup Guide — Synthetic Questions Agent
+Step 1 — Install Git
+Go to https://git-scm.com/download/win and download the installer
+Run the installer, click Next through all steps using the defaults
+Verify: open Command Prompt (Win + R → type cmd → Enter) and run:
+
+git --version
+You should see something like git version 2.x.x
+Step 2 — Install Python
+Go to https://www.python.org/downloads/ and download the latest Python 3.11+ installer
+Run the installer — IMPORTANT: check the box "Add python.exe to PATH" before clicking Install Now
+Verify:
+
+python --version
+pip --version
+Step 3 — Clone the Repository
+
+git clone git@github.com:abrahamnjuguna6-lang/synthetic-questions-agent.git
+cd synthetic-questions-agent
+SSH key note: If you get a Permission denied (publickey) error, either add your SSH key to GitHub or use HTTPS instead:
+
+
+git clone https://github.com/abrahamnjuguna6-lang/synthetic-questions-agent.git
+Step 4 — Create a Virtual Environment
+
+cd synthetic-questions-agent
+python -m venv .venv
+.venv\Scripts\activate
+Your prompt will now show (.venv) at the start — this means the virtual environment is active. Always activate it before working on this project.
+
+Step 5 — Install Dependencies
+
+cd dataset_agent
+pip install -r requirements.txt
+This installs LangChain, LangGraph, and all other packages. It may take a few minutes.
+
+Step 6 — Configure Environment Variables
+Copy the example file and fill in your API keys:
+
+
+copy config\.env.example .env
+notepad .env
+In Notepad, fill in the required values. Minimum required:
+
+Option A — Anthropic (recommended):
+
+
+LLM_API_KEY=sk-ant-...          # from https://console.anthropic.com
+LLM_PROVIDER=anthropic
+LLM_TEMPERATURE=0.7
+LLM_MAX_TOKENS=8192
+LLM_USE_ROUTER=true
+ROUTER_PRIMARY_MODEL=claude-sonnet-4-6
+ROUTER_SECONDARY_MODEL=claude-haiku-4-5-20251001
+ROUTER_FALLBACK_MODEL=claude-opus-4-7
+
+RESEARCH_SEARCH_PROVIDER=tavily
+RESEARCH_TAVILY_API_KEY=tvly-...  # from https://app.tavily.com
+DATASET_DEFAULT_NUM_QUESTIONS=20
+DATASET_OUTPUT_FORMAT=json
+DATASET_OUTPUT_DIR=./output
+DATASET_GENERATION_BATCH_SIZE=5
+Option B — OpenRouter (free tier):
+
+
+LLM_API_KEY=sk-or-v1-...        # from https://openrouter.ai/keys
+LLM_PROVIDER=openrouter
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_TEMPERATURE=0.7
+LLM_MAX_TOKENS=8192
+LLM_USE_ROUTER=true
+ROUTER_PRIMARY_MODEL=deepseek/deepseek-v4-flash:free
+ROUTER_SECONDARY_MODEL=qwen/qwen3-coder:free
+ROUTER_FALLBACK_MODEL=google/gemma-4-31b-it:free
+
+RESEARCH_SEARCH_PROVIDER=duckduckgo   # free, no key needed
+DATASET_DEFAULT_NUM_QUESTIONS=20
+DATASET_OUTPUT_FORMAT=json
+DATASET_OUTPUT_DIR=./output
+DATASET_GENERATION_BATCH_SIZE=5
+Save and close Notepad.
+
+Step 7 — Prepare Your Questions File
+Create a text file with your sample questions. Two supported formats:
+
+MCQ format (recommended):
+
+
+Question: What is the primary function of the heart?
+A. Filter blood
+B. Pump blood throughout the body
+C. Produce hormones
+D. Exchange gases
+
+Question: Which chamber of the heart pumps blood to the lungs?
+A. Left ventricle
+B. Right atrium
+C. Right ventricle
+D. Left atrium
+Plain format (one question per line):
+
+
+What is the primary function of the heart?
+Which chamber pumps blood to the lungs?
+Save the file as e.g. my_questions.txt inside the dataset_agent\ folder.
+
+Step 8 — Run the Application
+Make sure you are in the dataset_agent\ folder with the virtual environment active:
+
+
+python main.py --questions my_questions.txt --num 20
+Common options:
+
+
+# Generate 30 questions in JSONL format
+python main.py --questions my_questions.txt --num 30 --format jsonl
+
+# Add extra instructions
+python main.py --questions my_questions.txt --num 20 --instructions "Focus on exam-style NCLEX questions"
+
+# Use a single model (bypasses router)
+python main.py --questions my_questions.txt --model claude-sonnet-4-6 --no-router
+
+# Save output to a specific folder
+python main.py --questions my_questions.txt --out C:\Users\YourName\Desktop\output
+Output files are saved to dataset_agent\output\ by default.
+
+Quick Reference — Every New Session
+Each time you open a new Command Prompt to work on this project:
+
+
+cd path\to\synthetic-questions-agent\dataset_agent
+.venv\Scripts\activate
+python main.py --questions my_questions.txt --num 20
+Troubleshooting
+Error	Fix
+python not found	Reinstall Python and check "Add to PATH"
+.venv\Scripts\activate blocked	Run Set-ExecutionPolicy -Scope CurrentUser RemoteSigned in PowerShell
+ModuleNotFoundError	Make sure .venv is active ((.venv) in prompt), then re-run pip install -r requirements.txt
+AuthenticationError / 401	Check your LLM_API_KEY in .env
+429 Rate limit	Free tier exhausted — wait for reset or switch to a paid model
+Permission denied (publickey)	Use the HTTPS clone URL instead of SSH
